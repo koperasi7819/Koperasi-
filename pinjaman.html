@@ -224,7 +224,7 @@ card.innerHTML=`
   
 <b>${p.nomor}</b><br>  
 Anggota : ${p.nama}<br>  
-Tanggal : ${p.tanggal}<br>  
+Tanggal : ${formatTanggal(p.tanggal)}<br>  
 Jumlah : Rp ${format(p.jumlah)}<br>  
 Keterangan : ${p.ket || "-"}  
   
@@ -252,12 +252,33 @@ function format(x){
 return new Intl.NumberFormat("id-ID").format(x)  
 }  
   
+function formatTanggal(t){
+  if(!t) return "-"
+  
+  let d = new Date(Number(t))
+
+  return d.toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  })
+}
+  
 function simpanPinjaman(){  
   
 let idAnggota=anggota.value  
 let nama=anggota.options[anggota.selectedIndex].text  
 let nomor=document.getElementById("noPinjaman").value  
-let tanggal=document.getElementById("tanggal").value  
+let tglInput = document.getElementById("tanggal").value
+let now = new Date()
+
+let tanggal = new Date(tglInput)
+tanggal.setHours(now.getHours())
+tanggal.setMinutes(now.getMinutes())
+
+tanggal = tanggal.getTime() // simpan dalam timestamp  
 let jumlah=document.getElementById("jumlah").value  
 let metode=document.getElementById("metode").value  
 let ket=document.getElementById("ket").value  
@@ -298,7 +319,10 @@ function editPinjaman(id){
   editId=id
 
   document.getElementById("editNoPinjaman").value=p.nomor
-  document.getElementById("editTanggal").value=p.tanggal
+  if(p.tanggal){
+  let d = new Date(Number(p.tanggal))
+  document.getElementById("editTanggal").value = d.toISOString().split("T")[0]
+}
   document.getElementById("editMetode").value=p.metode
   document.getElementById("editJumlah").value=p.jumlah
   document.getElementById("editKet").value=p.ket||""
@@ -314,7 +338,14 @@ function updatePinjaman(){
 
   let idAnggota=editAnggota.value
   let nama=editAnggota.options[editAnggota.selectedIndex].text
-  let tanggal=document.getElementById("editTanggal").value
+  let tglInput = document.getElementById("editTanggal").value
+let now = new Date()
+
+let tanggal = new Date(tglInput)
+tanggal.setHours(now.getHours())
+tanggal.setMinutes(now.getMinutes())
+
+tanggal = tanggal.getTime()
   let metode=document.getElementById("editMetode").value
   let nomor=document.getElementById("editNoPinjaman").value
   let ket=document.getElementById("editKet").value
