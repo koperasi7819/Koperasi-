@@ -253,9 +253,17 @@ return new Intl.NumberFormat("id-ID").format(x)
 }  
   
 function formatTanggal(t){
-  if(!t) return "-"
-  
-  let d = new Date(Number(t))
+  if(!t || t === "" || t === null) return "-"
+
+  let d
+
+  if(!isNaN(t)){
+    d = new Date(Number(t))
+  }else{
+    d = new Date(t)
+  }
+
+  if(isNaN(d)) return "-"
 
   return d.toLocaleString("id-ID", {
     day: "2-digit",
@@ -265,7 +273,6 @@ function formatTanggal(t){
     minute: "2-digit"
   })
 }
-  
 function simpanPinjaman(){  
   
 let idAnggota=anggota.value  
@@ -312,24 +319,44 @@ function editPinjaman(id){
 
   if(!id) return alert("ID tidak ditemukan")
 
-  let p=dataPinjaman[id]
-
+  let p = dataPinjaman[id]
   if(!p) return alert("Data tidak ditemukan")
 
-  editId=id
+  editId = id
 
-  document.getElementById("editNoPinjaman").value=p.nomor
+  // ✅ No Pinjaman
+  document.getElementById("editNoPinjaman").value = p.nomor || ""
+
+  // ✅ Anggota
+  editAnggota.value = p.idAnggota || ""
+
+  // ✅ Tanggal (support semua format)
   if(p.tanggal){
-  let d = new Date(Number(p.tanggal))
-  document.getElementById("editTanggal").value = d.toISOString().split("T")[0]
-}
-  document.getElementById("editMetode").value=p.metode
-  document.getElementById("editJumlah").value=p.jumlah
-  document.getElementById("editKet").value=p.ket||""
+    let d
 
-  editAnggota.value=p.idAnggota
+    if(!isNaN(p.tanggal)){
+      d = new Date(Number(p.tanggal))
+    }else{
+      d = new Date(p.tanggal)
+    }
 
-  document.getElementById("popupEdit").style.display="flex"
+    if(!isNaN(d)){
+      document.getElementById("editTanggal").value =
+        d.toISOString().split("T")[0]
+    }
+  }
+
+  // ✅ Metode
+  document.getElementById("editMetode").value = p.metode || "cash"
+
+  // ✅ Jumlah
+  document.getElementById("editJumlah").value = p.jumlah || 0
+
+  // ✅ Keterangan
+  document.getElementById("editKet").value = p.ket || ""
+
+  // ✅ Tampilkan popup
+  document.getElementById("popupEdit").style.display = "flex"
 }
   
 function updatePinjaman(){
