@@ -23,10 +23,11 @@ button{padding:7px 12px;border:none;border-radius:6px;cursor:pointer;}
 .icon-btn{border:none;background:none;cursor:pointer;}
 .icon-edit{color:#ffc107;}
 .icon-delete{color:#dc3545;}
-.popup{position:fixed;font-size:12px;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999;}
+.popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999;}
 .popup.active{display:flex;}
 .popup-box{background:white;padding:20px;border-radius:10px;width:320px;max-width:90%;box-shadow:0 6px 15px rgba(0,0,0,0.2);position:relative;z-index:10000;}
 .angsuran-card:hover{transform:scale(1.01);transition:0.2s;}
+header{background: linear-gradient(to right, #1e90ff, #0f3057);color:white;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 3px 10px rgba(0,0,0,0.2);}
 .brand{display:flex;align-items:center;gap:10px;}
 .brand img{width:42px;height:42px;border-radius:50%;object-fit:cover;}
 .brand-text .subtitle{font-size:12px;opacity:0.9;}
@@ -34,9 +35,7 @@ button{padding:7px 12px;border:none;border-radius:6px;cursor:pointer;}
 .progress{height:6px;background:#eee;border-radius:5px;overflow:hidden;margin:6px 0 10px;}
 .progress-bar{height:100%;background:#28a745;}
 .lunas{color:#28a745;font-weight:bold;}
-
-
-  </style>
+</style>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -46,10 +45,9 @@ button{padding:7px 12px;border:none;border-radius:6px;cursor:pointer;}
     <div class="brand-text">
       <div class="subtitle">Koperasi</div>
       <div class="title">ARFA DRIVER</div>
-      </div>
-  <button class="btn-primary" onclick="kembali()">Kembali</button>
-      
+    </div>
   </div>
+  <button class="btn-primary" onclick="kembali()">Kembali</button>
 </header>
 
 <div class="card" id="formAngsuran">
@@ -57,10 +55,6 @@ button{padding:7px 12px;border:none;border-radius:6px;cursor:pointer;}
 </div>
 
 <div class="container">
-  <div class="card">
-  Saldo Kas : Rp <span id="saldoKas">0</span>
-</div>
-  
   <div class="card">
     <div class="row"><span>Angsuran Aktif</span><span id="statAktif">0</span></div>
     <div class="row"><span>Total Pinjaman Aktif</span><span id="statPinjaman">Rp0</span></div>
@@ -83,7 +77,6 @@ button{padding:7px 12px;border:none;border-radius:6px;cursor:pointer;}
     <button class="btn-simpan" onclick="simpanAngsuran()">Simpan Angsuran</button>
   </div>
 
-  
   <div class="card">
     <h3>Daftar Angsuran</h3>
     <div id="listAngsuran"></div>
@@ -129,9 +122,9 @@ if(!role){
   window.location.href="index.html";
 }
 
-const pinjamanRef = ref(db,"pinjaman");
-const angsuranRef = ref(db,"angsuran");
-const kasRef = ref(db,"kas");
+const pinjamanRef = ref(db,"koperasi/pinjaman");
+const angsuranRef = ref(db,"koperasi/angsuran");
+const kasRef = ref(db,"koperasi/kas");
 
 const pinjamanSelect = document.getElementById("pinjamanSelect");
 const listAngsuran = document.getElementById("listAngsuran");
@@ -146,25 +139,7 @@ let angsuranLoaded = false;
 function rupiah(n){ return n.toLocaleString("id-ID",{style:"currency",currency:"IDR"});}
 function inputDate(t){ let d=new Date(t); return d.toISOString().split("T")[0];}
 function formatTanggal(t){ if(!t) return "-"; let d=new Date(t); return isNaN(d)?t:d.toLocaleDateString("id-ID"); }
-function hitungSaldoKas(){
-  onValue(kasRef, snap=>{
-    let saldo = 0;
 
-    snap.forEach(d=>{
-      let k = d.val();
-      let jumlah = Number(k.jumlah || 0);
-
-      if(k.tipe === "masuk") saldo += jumlah;
-      else saldo -= jumlah;
-    });
-
-    document.getElementById("saldoKas").innerText =
-      saldo.toLocaleString("id-ID");
-
-    console.log("Saldo Kas:", saldo);
-  });
-}
-  
 function getSisaPinjaman(pinjamanId){
   let p = dataPinjaman[pinjamanId];
   if(!p) return {pinjaman:0,angsuran:0,sisa:0};
@@ -177,7 +152,6 @@ function getSisaPinjaman(pinjamanId){
   });
   return { pinjaman: totalPinjaman, angsuran: totalAngsuran, sisa: Math.max(totalPinjaman-totalAngsuran,0) };
 }
-  
 
 // ===== STATISTIK =====
 function hitungStatistik(){
@@ -193,29 +167,17 @@ function hitungStatistik(){
 
 // ===== LOAD PINJAMAN =====
 function loadPinjaman(){
-
   pinjamanSelect.innerHTML = "<option value=''>Pilih anggota peminjam</option>";
-
-  Object.entries(dataPinjaman)
-  .sort((a,b)=>a[1].nama.localeCompare(b[1].nama))
-  .forEach(([id,p])=>{
-
+  Object.entries(dataPinjaman).forEach(([id,p])=>{
     let info = getSisaPinjaman(id);
-
-    // HANYA TAMPILKAN YANG BELUM LUNAS
-    if(info.sisa > 0){
-
-      let option = document.createElement("option");
-
-      option.value = id;
-      option.textContent =
-        `${p.nama} | ${p.nomor} (Sisa ${rupiah(info.sisa)})`;
-
-      pinjamanSelect.appendChild(option);
-    }
+    pinjamanSelect.innerHTML += `
+      <option value="${id}">
+        ${p.nama} | ${p.nomor} (Sisa ${rupiah(info.sisa)})
+      </option>
+    `;
   });
 }
-  
+
 // ===== LOAD DATA =====
 onValue(pinjamanRef,snap=>{
   dataPinjaman={};
@@ -226,165 +188,66 @@ onValue(pinjamanRef,snap=>{
 
 onValue(angsuranRef,snap=>{
   dataAngsuran={};
-
   snap.forEach(d=>{
     let a=d.val();
-    let key=d.key;
-
     a.jumlah = Number(a.jumlah) || 0;
-
-    // ===== PERBAIKI FORMAT TANGGAL LAMA =====
-    if(a.tanggal && typeof a.tanggal==="string"){
-
-      let parsed = Date.parse(a.tanggal);
-
-      if(!isNaN(parsed)){
-        a.tanggal = parsed;
-
-        // update ke firebase supaya permanen
-        update(ref(db,"angsuran/"+key),{
-          tanggal:parsed
-        });
-
-      }else{
-        a.tanggal = Date.now();
-      }
-
-    }
-
-    if(!a.tanggal){
-      a.tanggal = Date.now();
-    }
-
-    dataAngsuran[key]=a;
+    if(a.tanggal && typeof a.tanggal==="string"){ let t=new Date(a.tanggal.replace(/\./g,":")); if(!isNaN(t)) a.tanggal=t.getTime(); }
+    if(!a.tanggal){ a.tanggal=Date.now(); }
+    dataAngsuran[d.key]=a;
   });
-
   angsuranLoaded = true;
-
-  if(pinjamanLoaded && angsuranLoaded){
-    loadPinjaman();
-    render();
-  }
-
+  if(pinjamanLoaded && angsuranLoaded){ loadPinjaman(); render(); }
 });
 
-// ===== RENDER =====//
-  function render(){
-
+// ===== RENDER =====
+function render(){
   listAngsuran.innerHTML="";
-
-  // ===== HITUNG TOTAL ANGSURAN PER PINJAMAN =====
-  let mapAngsuran = {};
-
-  Object.entries(dataAngsuran).forEach(([id,a])=>{
-    if(!mapAngsuran[a.pinjamanId]){
-      mapAngsuran[a.pinjamanId] = {
-        total:0,
-        list:[]
-      };
-    }
-
-    mapAngsuran[a.pinjamanId].total += Number(a.jumlah)||0;
-    mapAngsuran[a.pinjamanId].list.push({id,...a});
-  });
-
-
-  // ===== LOOP PINJAMAN =====
-  Object.entries(dataPinjaman)
-  .sort((a,b)=>a[1].nama.localeCompare(b[1].nama))
-  .forEach(([pinId,p])=>{
-
-    let totalPinjaman = Number(p.jumlah)||0;
-
-    let totalAngsuran = mapAngsuran[pinId]?.total || 0;
-
-    let sisa = Math.max(totalPinjaman-totalAngsuran,0);
-
-    let persen = totalPinjaman>0 ? Math.round((totalAngsuran/totalPinjaman)*100) : 0;
-
-    let status = sisa<=0
-      ? `<span class="lunas">LUNAS</span>`
-      : rupiah(sisa);
-
-    let card=document.createElement("div");
-    card.className="angsuran-card";
-
-    card.innerHTML=`
-      <div class="nama">${p.nama}</div>
-      <div class="nomor">${p.nomor}</div>
-
-      <div class="row">
-        <span>Pinjaman</span>
-        <span>${rupiah(totalPinjaman)}</span>
-      </div>
-
-      <div class="row">
-        <span>Total Angsuran</span>
-        <span>${rupiah(totalAngsuran)}</span>
-      </div>
-
-      <div class="row">
-        <span>Sisa Pinjaman</span>
-        <span style="color:#dc3545;font-weight:bold">${status}</span>
-      </div>
-
-      <div class="progress">
-        <div class="progress-bar" style="width:${persen}%"></div>
-      </div>
-
-      <hr>
-
-      <div id="listAngsuran-${pinId}"></div>
-    `;
-
-    listAngsuran.appendChild(card);
-
-    let listDiv = card.querySelector(`#listAngsuran-${pinId}`);
-
-    let list = mapAngsuran[pinId]?.list || [];
-
-    list
-    .sort((a,b)=>b.tanggal-a.tanggal)
-    .forEach(a=>{
-
-      let row=document.createElement("div");
-      row.className="row";
-
-      row.innerHTML=`
-        <span>
-        ${formatTanggal(a.tanggal)} - ${a.nama}
-        (${rupiah(a.jumlah)})
-        <span class="badge ${a.metode}">${a.metode}</span>
-        </span>
-
-        <span>
-        ${role==="admin"?`
-        <button class="icon-btn icon-edit">
-        <span class="material-icons">edit</span>
-        </button>
-
-        <button class="icon-btn icon-delete">
-        <span class="material-icons">delete</span>
-        </button>
-        `:""}
-        </span>
+  Object.entries(dataPinjaman).sort((a,b)=>a[1].nama.localeCompare(b[1].nama))
+    .forEach(([pinId,p])=>{
+      let info = getSisaPinjaman(pinId);
+      let terakhir = null;
+      Object.values(dataAngsuran).forEach(a=>{ if(a.pinjamanId===pinId && (!terakhir || a.tanggal>terakhir.tanggal)) terakhir=a; });
+      let persen = info.pinjaman>0 ? Math.round((info.angsuran/info.pinjaman)*100) : 0;
+      let status = info.sisa<=0 ? `<span class="lunas">LUNAS</span>` : rupiah(info.sisa);
+      let card=document.createElement("div");
+      card.className="angsuran-card";
+      card.innerHTML=`
+        <div class="nama">${p.nama}</div>
+        <div class="nomor">${p.nomor}</div>
+        <div class="row"><span>Pinjaman</span><span>${rupiah(info.pinjaman)}</span></div>
+        <div class="row"><span>Total Angsuran</span><span>${rupiah(info.angsuran)}</span></div>
+        <div class="row"><span>Sisa Pinjaman</span><span style="color:#dc3545;font-weight:bold">${status}</span></div>
+        <div class="progress"><div class="progress-bar" style="width:${persen}%"></div></div>
+        <hr>
+        <div class="row"><span>Bayar Terakhir</span><span class="jumlah">${terakhir?rupiah(terakhir.jumlah):"-"}</span></div>
+        <div class="row"><span>Tanggal</span><span>${terakhir?formatTanggal(terakhir.tanggal):"-"}</span></div>
+        <hr>
+        <div id="listAngsuran-${pinId}"></div>
       `;
+      listAngsuran.appendChild(card);
 
-      let btnEdit=row.querySelector(".icon-edit");
-      let btnDelete=row.querySelector(".icon-delete");
-
-      if(btnEdit) btnEdit.onclick=()=>editAngsuran(a.id);
-      if(btnDelete) btnDelete.onclick=()=>hapusAngsuran(a.id);
-
-      listDiv.appendChild(row);
-
+      let listDiv = card.querySelector(`#listAngsuran-${pinId}`);
+      Object.entries(dataAngsuran).filter(([id,a])=>a.pinjamanId===pinId)
+        .sort((a,b)=>b[1].tanggal-a[1].tanggal)
+        .forEach(([id,a])=>{
+          let row=document.createElement("div");
+          row.className="row";
+          row.innerHTML=`
+            <span>${formatTanggal(a.tanggal)} - ${a.nama} (${rupiah(a.jumlah)}) <span class="badge ${a.metode}">${a.metode}</span></span>
+            <span>${role==="admin"?`
+              <button class="icon-btn icon-edit"><span class="material-icons">edit</span></button>
+              <button class="icon-btn icon-delete"><span class="material-icons">delete</span></button>`:""}</span>
+          `;
+          let btnEdit=row.querySelector(".icon-edit");
+          let btnDelete=row.querySelector(".icon-delete");
+          if(btnEdit) btnEdit.addEventListener("click",()=>editAngsuran(id));
+          if(btnDelete) btnDelete.addEventListener("click",()=>hapusAngsuran(id));
+          listDiv.appendChild(row);
+        });
     });
-
-  });
-
   hitungStatistik();
 }
-  
+
 // ===== SIMPAN =====
 async function simpanAngsuran(){
   if(role!=="admin"){ alert("Hanya admin yang bisa menambah angsuran"); return; }
@@ -405,7 +268,7 @@ async function simpanAngsuran(){
     sumberKas:metode,
     jumlah
   });
-  await update(ref(db,"angsuran/"+angRef.key),{kasId: kasPush.key});
+  await update(ref(db,"koperasi/angsuran/"+angRef.key),{kasId: kasPush.key});
   document.getElementById("tanggal").valueAsDate=new Date();
   document.getElementById("jumlah").value="";
 }
@@ -421,45 +284,16 @@ function editAngsuran(id){
   document.getElementById("popupEdit").classList.add("active");
 }
 async function updateAngsuran(){
-  if(role!=="admin"){
-    alert("Hanya admin yang bisa mengupdate angsuran");
-    return;
-  }
-
+  if(role!=="admin"){ alert("Hanya admin yang bisa mengupdate angsuran"); return; }
   if(!editId) return;
-
-  let nama = document.getElementById("editNama").value;
-  let tanggal = document.getElementById("editTanggal").value;
-
-  if(!nama || !tanggal){
-    alert("Data tidak valid");
-    return;
-  }
-
-  let a = dataAngsuran[editId];
-  let kasId = a.kasId || null; // simpan dulu
-  let timestamp = new Date(tanggal).getTime();
-
-  try{
-
-    await update(ref(db,"angsuran/"+editId),{
-      nama:nama,
-      tanggal:timestamp
-    });
-
-    if(kasId){
-      await update(ref(db,"kas/"+kasId),{
-        tanggal:timestamp,
-        keterangan:`Angsuran (${nama})`
-      });
-    }
-
-    tutupPopup(); // tutup popup setelah selesai
-
-  }catch(err){
-    console.error(err);
-    alert("Update gagal");
-  }
+  let nama=document.getElementById("editNama").value;
+  let tanggal=document.getElementById("editTanggal").value;
+  if(!nama||!tanggal){ alert("Data tidak valid"); return; }
+  let a=dataAngsuran[editId];
+  let timestamp=new Date(tanggal).getTime();
+  await update(ref(db,"koperasi/angsuran/"+editId),{nama,tanggal:timestamp});
+  if(a.kasId){ await update(ref(db,"koperasi/kas/"+a.kasId),{tanggal:timestamp,keterangan:`Angsuran (${nama})`}); }
+  tutupPopup();
 }
 
 // ===== HAPUS =====
@@ -467,32 +301,17 @@ async function hapusAngsuran(id){
   if(role!=="admin"){ alert("Hanya admin yang bisa menghapus angsuran"); return; }
   if(!confirm("Yakin ingin menghapus angsuran ini? Kas juga akan dikoreksi!")) return;
   let a=dataAngsuran[id];
-  await remove(ref(db,"angsuran/"+id));
-  if(a.kasId){ await remove(ref(db,"kas/"+a.kasId)); }
+  await remove(ref(db,"koperasi/angsuran/"+id));
+  if(a.kasId){ await remove(ref(db,"koperasi/kas/"+a.kasId)); }
 }
 
 // ===== POPUP =====
-function tutupPopup(){
-  document.getElementById("popupEdit").classList.remove("active");
-  editId = null;
-  document.getElementById("editNama").value="";
-  document.getElementById("editTanggal").value="";
-}
-  
+function tutupPopup(){ document.getElementById("popupEdit").classList.remove("active"); editId=null; }
+document.getElementById("popupEdit").addEventListener("click",function(e){ if(e.target.id==="popupEdit"){ tutupPopup(); } });
+window.kembali=function(){ window.location.href="dashboard.html"; }
+
 // ===== ROLE BASED =====
 if(role!=="admin"){ document.getElementById("formTambah").style.display="none"; }
-window.updateAngsuran = updateAngsuran;
-window.tutupPopup = tutupPopup;
-window.simpanAngsuran = simpanAngsuran;
-window.editAngsuran = editAngsuran;
-window.hapusAngsuran = hapusAngsuran;
-  
-  /* ================= KEMBALI ================= */
-window.kembali = function(){
-  window.location.href="dashboard.html";
-}
-  // ===== INIT =====
-hitungSaldoKas();
-  </script>
+</script>
 </body>
 </html>
