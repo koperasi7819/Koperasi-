@@ -287,53 +287,60 @@ generateNoPinjaman()
   
 }  
   
-function editPinjaman(id){  
+function editPinjaman(id){
+
+  if(!id) return alert("ID tidak ditemukan")
+
+  let p=dataPinjaman[id]
+
+  if(!p) return alert("Data tidak ditemukan")
+
+  editId=id
+
+  document.getElementById("editNoPinjaman").value=p.nomor
+  document.getElementById("editTanggal").value=p.tanggal
+  document.getElementById("editMetode").value=p.metode
+  document.getElementById("editJumlah").value=p.jumlah
+  document.getElementById("editKet").value=p.ket||""
+
+  editAnggota.value=p.idAnggota
+
+  document.getElementById("popupEdit").style.display="flex"
+}
   
-let p=dataPinjaman[id]  
-  
-editId=id  
-  
-document.getElementById("editNoPinjaman").value=p.nomor  
-document.getElementById("editTanggal").value=p.tanggal  
-document.getElementById("editMetode").value=p.metode  
-document.getElementById("editJumlah").value=p.jumlah  
-document.getElementById("editKet").value=p.ket||""  
-  
-editAnggota.value=p.idAnggota  
-  
-document.getElementById("popupEdit").style.display="flex"  
-  
-}  
-  
-function updatePinjaman(){  
-  
-let idAnggota=editAnggota.value  
-let nama=editAnggota.options[editAnggota.selectedIndex].text  
-let tanggal=document.getElementById("editTanggal").value  
-let metode=document.getElementById("editMetode").value  
-let nomor=document.getElementById("editNoPinjaman").value  
-let ket=document.getElementById("editKet").value  
-  
-if(!tanggal)return alert("Tanggal kosong")  
-  
-pinjamanRef.child(editId).update({  
-idAnggota,  
-nama,  
-tanggal,  
-metode,  
-nomor,  
-ket  
-})  
-  
-.then(()=>{  
-  
-alert("Data berhasil diupdate")  
-  
-tutupPopup()  
-  
-})  
-  
-}  
+function updatePinjaman(){
+
+  if(!editId) return alert("ID edit tidak ada")
+
+  let idAnggota=editAnggota.value
+  let nama=editAnggota.options[editAnggota.selectedIndex].text
+  let tanggal=document.getElementById("editTanggal").value
+  let metode=document.getElementById("editMetode").value
+  let nomor=document.getElementById("editNoPinjaman").value
+  let ket=document.getElementById("editKet").value
+
+  if(!tanggal) return alert("Tanggal kosong")
+
+  pinjamanRef.child(editId).update({
+    idAnggota,
+    nama,
+    tanggal,
+    metode,
+    nomor,
+    ket
+  })
+  .then(()=>{
+    alert("Data berhasil diupdate")
+    tutupPopup()
+
+    editId = null   // ✅ TARUH DI SINI
+  })
+  .catch(err=>{
+    console.error(err)
+    alert("Gagal update: "+err.message)
+  })
+
+}
   
 function hapusPinjaman(id){  
   
